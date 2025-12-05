@@ -47,7 +47,7 @@ def main():
     terminal_output = grid.to_console()
     html_output = grid.to_html()
 
-    # Create a second grid with border feature enabled
+    # Create a second grid with border feature enabled and title
     bordered_grid = MonospaceGrid(
         width=30,
         height=5,
@@ -55,23 +55,24 @@ def main():
         border=True,
         border_padding=1,
         border_attrs={"class": "ansi-cyan ansi-bold"},
+        title="BORDER DEMO",
     )
 
     # Add some content to the bordered grid
-    title = "╔═══ BORDER DEMO ═══╗"
-    bordered_grid[0, 4:4+len(title)] = (title, {"class": "ansi-yellow ansi-bold"})
-
     text1 = "Automatic box borders!"
-    bordered_grid[2, 4:4+len(text1)] = (text1, {"class": "ansi-green"})
+    bordered_grid[1, 4:4+len(text1)] = (text1, {"class": "ansi-green"})
 
     text2 = "With configurable padding"
-    bordered_grid[3, 3:3+len(text2)] = (text2, {"class": "ansi-white"})
+    bordered_grid[2, 3:3+len(text2)] = (text2, {"class": "ansi-white"})
+
+    text3 = "And title headers!"
+    bordered_grid[3, 5:5+len(text3)] = (text3, {"class": "ansi-yellow"})
 
     bordered_terminal = bordered_grid.to_console()
     bordered_html = bordered_grid.to_html()
 
     # Create a third grid demonstrating the new print() method with auto-expanding
-    print_demo_grid = MonospaceGrid(border=True)
+    print_demo_grid = MonospaceGrid(border=True, title="System Status")
     print_demo_grid.print("Welcome to ", color="cyan", bold=True)
     print_demo_grid.print("hyperterm", color="yellow", bold=True, underline=True)
     print_demo_grid.print("!\n", color="cyan", bold=True)

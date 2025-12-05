@@ -59,6 +59,7 @@ class MonospaceGrid:
         border: Whether to render a border around the grid
         border_padding: Whitespace between border and content (default: 1)
         border_attrs: HTML attributes for border characters
+        title: Title to display in header section (default: "")
     """
 
     def __init__(
@@ -69,6 +70,7 @@ class MonospaceGrid:
         border: bool = True,
         border_padding: int = 1,
         border_attrs: Optional[dict[str, str]] = None,
+        title: str = "",
     ) -> None:
         """Initialize a new MonospaceGrid.
 
@@ -79,6 +81,7 @@ class MonospaceGrid:
             border: Whether to render a border around the grid (default: False)
             border_padding: Number of whitespace cells between border and content (default: 1)
             border_attrs: HTML attributes to apply to border characters (default: {})
+            title: Title to display in header section (default: "")
         """
         self.width: int = width if width is not None else 0
         self.height: int = height if height is not None else 0
@@ -86,6 +89,23 @@ class MonospaceGrid:
         self.border: bool = border
         self.border_padding: int = border_padding
         self.border_attrs: dict[str, str] = border_attrs if border_attrs is not None else {}
+        self.title: str = title
+
+        # Ensure width is large enough for the title if border is enabled
+        if self.border and self.title:
+            # Title is rendered inline as "╭─ {title} ───╮"
+            # Format: "╭" + "─" + " {title} " + "─" * remaining + "╮"
+            # Total dashes in inner_width: 1 (after ╭) + title_length + remaining
+            # We need at least one dash after the title for aesthetics
+            title_text_width = len(f" {self.title} ")
+            # inner_width = content_width + 2 * padding
+            # remaining_width = inner_width - title_text_width - 1
+            # We want remaining_width >= 1
+            # So: inner_width >= title_text_width + 2
+            # So: content_width >= title_text_width + 2 - 2 * padding
+            min_content_width = title_text_width + 2 - (2 * self.border_padding)
+            if self.width < min_content_width:
+                self.width = min_content_width
 
         # Cursor tracking for print() method
         self.cursor_row: int = 0
@@ -553,8 +573,30 @@ class MonospaceGrid:
         padding = self.border_padding
         inner_width = content_width + 2 * padding  # padding on both sides
 
-        # Top border: ╭────╮
-        result.append(f"{reset}{border_ansi}╭{'─' * inner_width}╮{reset}")
+        # Top border with optional inline title: ╭─Title────╮ or ╭────╮
+        if self.title:
+            title_text = f" {self.title} "
+            # Calculate remaining dashes after the dash following ╭ and the title
+            # Format is: ╭─ + title + ─── + ╮
+            # Total dashes needed: inner_width
+            # Dashes used: 1 (after ╭) + title_length + remaining
+            remaining_width = inner_width - len(title_text) - 1  # -1 for the dash after ╭
+            if remaining_width > 0:
+                result.append(
+                    f"{reset}{border_ansi}╭─{reset}"
+                    f"{title_text}"
+                    f"{reset}{border_ansi}{'─' * remaining_width}╮{reset}"
+                )
+            else:
+                # Title is too long, truncate or just show what fits
+                result.append(
+                    f"{reset}{border_ansi}╭─{reset}"
+                    f"{title_text[:inner_width - 1]}"  # -1 for the dash after ╭
+                    f"{reset}{border_ansi}╮{reset}"
+                )
+        else:
+            # No title, standard top border
+            result.append(f"{reset}{border_ansi}╭{'─' * inner_width}╮{reset}")
 
         # Top padding rows
         for _ in range(padding):
@@ -691,8 +733,36 @@ class MonospaceGrid:
         border_span_open = f"<span {border_html_attrs}>" if border_html_attrs else ""
         border_span_close = "</span>" if border_html_attrs else ""
 
-        # Top border: ╭────╮
-        result.append(f"{border_span_open}╭{'─' * inner_width}╮{border_span_close}")
+        # Top border with optional inline title: ╭─Title────╮ or ╭────╮
+        if self.title:
+            # HTML-escape the title
+            safe_title = (
+                self.title.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+            )
+            title_text = f" {safe_title} "
+            # Calculate remaining dashes after the dash following ╭ and the title
+            # Format is: ╭─ + title + ─── + ╮
+            # Total dashes needed: inner_width
+            # Dashes used: 1 (after ╭) + title_length + remaining
+            remaining_width = inner_width - len(title_text) - 1  # -1 for the dash after ╭
+            if remaining_width > 0:
+                result.append(
+                    f"{border_span_open}╭─{border_span_close}"
+                    f"{title_text}"
+                    f"{border_span_open}{'─' * remaining_width}╮{border_span_close}"
+                )
+            else:
+                # Title is too long, truncate or just show what fits
+                result.append(
+                    f"{border_span_open}╭─{border_span_close}"
+                    f"{title_text[:inner_width - 1]}"  # -1 for the dash after ╭
+                    f"{border_span_open}╮{border_span_close}"
+                )
+        else:
+            # No title, standard top border
+            result.append(f"{border_span_open}╭{'─' * inner_width}╮{border_span_close}")
 
         # Top padding rows
         for _ in range(padding):
