@@ -87,7 +87,7 @@ class HTMLRenderer:
         html_style = f"""
             font-family: 'Consolas', 'Courier New', monospace;
             font-size: 14px;
-            line-height: 1.1;
+            line-height: 1;
             background-color: {default_bg};
             color: #FFFFFF;
             padding: 10px;

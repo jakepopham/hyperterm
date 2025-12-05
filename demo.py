@@ -8,62 +8,53 @@ def main():
     # Create a 40x12 grid
     grid = MonospaceGrid(width=40, height=12, fill_char=".")
 
-    # Draw a colored border box (yellow, bold) using privileged classes
-    grid.draw_box(x=5, y=2, w=30, h=8, char="█", attrs={"class": "ansi-yellow ansi-bold"})
+    # Draw a colored border box (yellow, bold) using type-based dispatch
+    # Top and bottom borders (combined char + attrs)
+    grid[2, 5:35] = ("█" * 30, {"class": "ansi-yellow ansi-bold"})
+    grid[9, 5:35] = ("█" * 30, {"class": "ansi-yellow ansi-bold"})
+    # Left and right borders (also combined)
+    grid[3:9, 5] = ("█", {"class": "ansi-yellow ansi-bold"})
+    grid[3:9, 34] = ("█", {"class": "ansi-yellow ansi-bold"})
 
     # Draw a title in the center (bold, red)
     title = "SYSTEM STATUS"
     x_title = 20 - len(title) // 2
-    grid.draw_text(x_start=x_title, y_start=3, text=title, attrs={"class": "ansi-red ansi-bold"})
+    grid[3, x_title : x_title + len(title)] = (title, {"class": "ansi-red ansi-bold"})
 
     # Draw a line of normal text (white)
-    grid.draw_text(x_start=7, y_start=5, text="Loading modules...", attrs={"class": "ansi-white"})
+    grid[5, 7:25] = ("Loading modules...", {"class": "ansi-white"})
 
     # Draw a highlighted sequence (cyan text)
-    grid.draw_text(x_start=7, y_start=7, text="Module BIND_34... ", attrs={"class": "ansi-cyan"})
+    grid[7, 7:25] = ("Module BIND_34... ", {"class": "ansi-cyan"})
 
     # Draw status indicator (green on blue, underlined)
-    grid.draw_text(
-        x_start=25,
-        y_start=7,
-        text="[OK]",
-        attrs={"class": "ansi-green ansi-bg-blue ansi-underline"},
-    )
+    grid[7, 25:29] = ("[OK]", {"class": "ansi-green ansi-bg-blue ansi-underline"})
 
     # Draw an error message (yellow text on red background, bold)
     error = "ERROR: MEMORY ACCESS DENIED"
     x_error = 20 - len(error) // 2
-    grid.draw_text(
-        x_start=x_error,
-        y_start=9,
-        text=error,
-        attrs={"class": "ansi-yellow ansi-bg-red ansi-bold"},
+    grid[9, x_error : x_error + len(error)] = (
+        error,
+        {"class": "ansi-yellow ansi-bg-red ansi-bold"},
     )
 
     # Demonstrate custom HTMX attributes (only visible in HTML)
-    grid.draw_text(
-        x_start=7,
-        y_start=11,
-        text="Click me!",
-        attrs={"class": "ansi-cyan clickable", "hx-get": "/data", "data-action": "test"},
+    grid[11, 7:16] = (
+        "Click me!",
+        {"class": "ansi-cyan clickable", "hx-get": "/data", "data-action": "test"},
     )
+
+    terminal_output = TerminalRenderer.render(grid)
+    html_output = HTMLRenderer.render(grid)
+
 
     # Render to terminal
     print("=" * 50)
     print("Terminal Output (ANSI):")
     print("=" * 50)
-    terminal_output = TerminalRenderer.render(grid)
     print(terminal_output)
     print("=" * 50)
     print()
-
-    # Render to HTML
-    print("=" * 50)
-    print("HTML Output:")
-    print("=" * 50)
-    html_output = HTMLRenderer.render(grid)
-    print(html_output)
-    print("=" * 50)
 
     # Save HTML to file with CSS styles for privileged classes
     with open("demo_output.html", "w") as f:
