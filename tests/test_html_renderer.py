@@ -1,61 +1,12 @@
-"""Tests for the HTMLRenderer."""
+"""Tests for the HTML rendering functionality."""
 
-from hyperterm import MonospaceGrid, Style
-from hyperterm.renderers import HTMLRenderer
-
-
-def test_get_html_style_default():
-    """Test that default style returns empty string."""
-    style = Style()
-    css = HTMLRenderer._get_html_style(style)
-    assert css == ""
-
-
-def test_get_html_style_foreground_color():
-    """Test CSS generation for foreground color."""
-    style = Style(fg_color="red")
-    css = HTMLRenderer._get_html_style(style)
-    assert "color:" in css
-    assert "#FF4444" in css
-
-
-def test_get_html_style_background_color():
-    """Test CSS generation for background color."""
-    style = Style(bg_color="blue")
-    css = HTMLRenderer._get_html_style(style)
-    assert "background-color:" in css
-    assert "#0000AA" in css
-
-
-def test_get_html_style_bold():
-    """Test CSS generation for bold text."""
-    style = Style(bold=True)
-    css = HTMLRenderer._get_html_style(style)
-    assert "font-weight: bold" in css
-
-
-def test_get_html_style_underline():
-    """Test CSS generation for underlined text."""
-    style = Style(underline=True)
-    css = HTMLRenderer._get_html_style(style)
-    assert "text-decoration: underline" in css
-
-
-def test_get_html_style_combined():
-    """Test CSS generation for combined styles."""
-    style = Style(fg_color="red", bg_color="blue", bold=True, underline=True)
-    css = HTMLRenderer._get_html_style(style)
-
-    assert "color:" in css
-    assert "background-color:" in css
-    assert "font-weight: bold" in css
-    assert "text-decoration: underline" in css
+from hyperterm import MonospaceGrid
 
 
 def test_render_empty_grid():
     """Test rendering an empty grid."""
-    grid = MonospaceGrid(5, 3)
-    output = HTMLRenderer.render(grid)
+    grid = MonospaceGrid(5, 3, border=False)
+    output = grid.to_html()
 
     # Should be wrapped in <pre> tag
     assert "<pre" in output
@@ -68,8 +19,8 @@ def test_render_empty_grid():
 
 def test_render_html_structure():
     """Test that output has proper HTML structure."""
-    grid = MonospaceGrid(5, 1)
-    output = HTMLRenderer.render(grid)
+    grid = MonospaceGrid(5, 1, border=False)
+    output = grid.to_html()
 
     # Should have <pre> wrapper
     assert output.startswith("<pre")
@@ -78,12 +29,12 @@ def test_render_html_structure():
 
 def test_render_escapes_special_chars():
     """Test that HTML special characters are escaped."""
-    grid = MonospaceGrid(5, 1)
-    grid.set_char(0, 0, "<")
-    grid.set_char(1, 0, ">")
-    grid.set_char(2, 0, "&")
+    grid = MonospaceGrid(5, 1, border=False)
+    grid[0, 0] = "<"
+    grid[0, 1] = ">"
+    grid[0, 2] = "&"
 
-    output = HTMLRenderer.render(grid)
+    output = grid.to_html()
 
     assert "&lt;" in output
     assert "&gt;" in output
@@ -92,11 +43,11 @@ def test_render_escapes_special_chars():
 
 def test_render_with_styles():
     """Test rendering grid with various styles."""
-    grid = MonospaceGrid(10, 3)
-    grid.draw_text(0, 0, "Red", fg_color="red", bold=True)
-    grid.draw_text(0, 1, "Blue", fg_color="blue")
+    grid = MonospaceGrid(10, 3, border=False)
+    grid[0, 0:3] = ("Red", {"class": "ansi-red ansi-bold"})
+    grid[1, 0:4] = ("Blue", {"class": "ansi-blue"})
 
-    output = HTMLRenderer.render(grid)
+    output = grid.to_html()
 
     # Should contain text
     assert "Red" in output
@@ -104,15 +55,15 @@ def test_render_with_styles():
 
     # Should contain span tags with styles
     assert "<span" in output
-    assert "style=" in output
+    assert "class=" in output
 
 
 def test_render_span_tags():
     """Test that styled text is wrapped in span tags."""
-    grid = MonospaceGrid(5, 1)
-    grid.draw_text(0, 0, "Test", fg_color="red")
+    grid = MonospaceGrid(5, 1, border=False)
+    grid[0, 0:4] = ("Test", {"class": "ansi-red"})
 
-    output = HTMLRenderer.render(grid)
+    output = grid.to_html()
 
     # Should have opening and closing span
     assert "<span" in output
@@ -121,11 +72,11 @@ def test_render_span_tags():
 
 def test_render_style_transitions():
     """Test that style transitions create new spans."""
-    grid = MonospaceGrid(10, 1)
-    grid.draw_text(0, 0, "ABC", fg_color="red")
-    grid.draw_text(3, 0, "XYZ", fg_color="blue")
+    grid = MonospaceGrid(10, 1, border=False)
+    grid[0, 0:3] = ("ABC", {"class": "ansi-red"})
+    grid[0, 3:6] = ("XYZ", {"class": "ansi-blue"})
 
-    output = HTMLRenderer.render(grid)
+    output = grid.to_html()
 
     # Should have multiple spans for different styles
     assert output.count("<span") >= 2
@@ -134,8 +85,8 @@ def test_render_style_transitions():
 
 def test_render_default_background():
     """Test that default background color is applied."""
-    grid = MonospaceGrid(5, 1)
-    output = HTMLRenderer.render(grid)
+    grid = MonospaceGrid(5, 1, border=False)
+    output = grid.to_html()
 
     # Should contain default black background
     assert "#000000" in output
@@ -143,8 +94,8 @@ def test_render_default_background():
 
 def test_render_custom_background():
     """Test that custom background color is applied."""
-    grid = MonospaceGrid(5, 1)
-    output = HTMLRenderer.render(grid, default_bg="#FF0000")
+    grid = MonospaceGrid(5, 1, border=False)
+    output = grid.to_html(default_bg="#FF0000")
 
     # Should contain custom red background
     assert "#FF0000" in output
@@ -152,22 +103,22 @@ def test_render_custom_background():
 
 def test_render_preserves_characters():
     """Test that all characters are preserved in output."""
-    grid = MonospaceGrid(5, 1)
+    grid = MonospaceGrid(5, 1, border=False)
     text = "Hello"
-    grid.draw_text(0, 0, text)
+    grid[0, 0:5] = text
 
-    output = HTMLRenderer.render(grid)
+    output = grid.to_html()
     assert text in output
 
 
 def test_render_multiline():
     """Test rendering multiple lines."""
-    grid = MonospaceGrid(5, 3)
-    grid.draw_text(0, 0, "Line1")
-    grid.draw_text(0, 1, "Line2")
-    grid.draw_text(0, 2, "Line3")
+    grid = MonospaceGrid(5, 3, border=False)
+    grid[0, 0:5] = "Line1"
+    grid[1, 0:5] = "Line2"
+    grid[2, 0:5] = "Line3"
 
-    output = HTMLRenderer.render(grid)
+    output = grid.to_html()
 
     # All text should be present
     assert "Line1" in output
@@ -177,11 +128,11 @@ def test_render_multiline():
 
 def test_render_closes_spans_at_line_end():
     """Test that spans are closed at the end of each line."""
-    grid = MonospaceGrid(5, 2)
-    grid.draw_text(0, 0, "Test", fg_color="red")
-    grid.draw_text(0, 1, "Next", fg_color="blue")
+    grid = MonospaceGrid(5, 2, border=False)
+    grid[0, 0:4] = ("Test", {"class": "ansi-red"})
+    grid[1, 0:4] = ("Next", {"class": "ansi-blue"})
 
-    output = HTMLRenderer.render(grid)
+    output = grid.to_html()
 
     # Should have equal number of opening and closing span tags
     assert output.count("<span") == output.count("</span>")
@@ -189,8 +140,8 @@ def test_render_closes_spans_at_line_end():
 
 def test_render_css_properties():
     """Test that pre tag has expected CSS properties."""
-    grid = MonospaceGrid(5, 1)
-    output = HTMLRenderer.render(grid)
+    grid = MonospaceGrid(5, 1, border=False)
+    output = grid.to_html()
 
     # Check for key CSS properties
     assert "font-family:" in output
@@ -200,28 +151,54 @@ def test_render_css_properties():
     assert "white-space: pre" in output
 
 
-def test_render_box():
-    """Test rendering a box."""
-    grid = MonospaceGrid(10, 10)
-    grid.draw_box(2, 2, 6, 6)
-
-    output = HTMLRenderer.render(grid)
-
-    # Box borders should be present
-    assert "#" in output
-    # Should have spans for styled borders
-    assert "<span" in output
-
-
 def test_render_ampersand_escaping_order():
     """Test that ampersands are escaped before other characters."""
-    grid = MonospaceGrid(10, 1)
-    grid.set_char(0, 0, "&")
-    grid.set_char(1, 0, "<")
+    grid = MonospaceGrid(10, 1, border=False)
+    grid[0, 0] = "&"
+    grid[0, 1] = "<"
 
-    output = HTMLRenderer.render(grid)
+    output = grid.to_html()
 
     # Should not have double-escaped characters
     assert "&amp;lt;" not in output
     assert "&amp;" in output
     assert "&lt;" in output
+
+
+def test_render_with_border():
+    """Test rendering grid with border."""
+    grid = MonospaceGrid(5, 3, border=True, border_padding=1)
+    grid[0, 0:5] = "Test"
+
+    output = grid.to_html()
+
+    # Should contain border characters
+    assert "╭" in output
+    assert "╰" in output
+    assert "│" in output
+    assert "─" in output
+
+
+def test_render_border_with_attrs():
+    """Test rendering border with custom attributes."""
+    grid = MonospaceGrid(5, 3, border=True, border_attrs={"class": "ansi-cyan"})
+    grid[0, 0:5] = "Test"
+
+    output = grid.to_html()
+
+    # Should contain border with attributes
+    assert "╭" in output
+    assert "ansi-cyan" in output
+
+
+def test_render_custom_html_attrs():
+    """Test rendering with custom HTML attributes like HTMX."""
+    grid = MonospaceGrid(5, 1, border=False)
+    grid[0, 0:4] = ("Link", {"hx-get": "/data", "data-action": "click"})
+
+    output = grid.to_html()
+
+    # Should contain custom attributes
+    assert "hx-get" in output
+    assert "/data" in output
+    assert "data-action" in output

@@ -46,27 +46,27 @@ def test_set_row_with_string():
     """Test setting entire row with string."""
     grid = MonospaceGrid(10, 5)
     grid[0] = "Hello"
-    # Should broadcast "Hello" across the 10-cell row
+    # Multi-character strings write once, then pad with fill_char
     assert grid.chars[0][0] == "H"
     assert grid.chars[0][1] == "e"
     assert grid.chars[0][2] == "l"
     assert grid.chars[0][3] == "l"
     assert grid.chars[0][4] == "o"
-    # Cycles
-    assert grid.chars[0][5] == "H"
-    assert grid.chars[0][6] == "e"
+    # Padded with fill_char (space)
+    assert grid.chars[0][5] == " "
+    assert grid.chars[0][6] == " "
 
 
 def test_set_row_slice_with_string():
     """Test setting a row slice with string."""
     grid = MonospaceGrid(10, 5)
     grid[0, 2:7] = "ABC"
-    # Should broadcast "ABC" across the 5-cell slice
+    # Multi-character strings write once, then pad with fill_char
     assert grid.chars[0][2] == "A"
     assert grid.chars[0][3] == "B"
     assert grid.chars[0][4] == "C"
-    assert grid.chars[0][5] == "A"  # Cycles
-    assert grid.chars[0][6] == "B"
+    assert grid.chars[0][5] == " "  # Padded
+    assert grid.chars[0][6] == " "  # Padded
     # Other cells unchanged
     assert grid.chars[0][0] == " "
     assert grid.chars[0][7] == " "
@@ -76,25 +76,25 @@ def test_set_column_with_string():
     """Test setting a column with string."""
     grid = MonospaceGrid(10, 5)
     grid[:, 0] = "XYZ"
-    # Should broadcast "XYZ" down the 5-cell column
+    # Multi-character strings write once, then pad with fill_char
     assert grid.chars[0][0] == "X"
     assert grid.chars[1][0] == "Y"
     assert grid.chars[2][0] == "Z"
-    assert grid.chars[3][0] == "X"  # Cycles
-    assert grid.chars[4][0] == "Y"
+    assert grid.chars[3][0] == " "  # Padded
+    assert grid.chars[4][0] == " "  # Padded
 
 
 def test_set_2d_region_with_string():
     """Test setting a 2D region with string."""
     grid = MonospaceGrid(10, 10)
     grid[0:2, 0:3] = "AB"
-    # Should broadcast "AB" across 6 cells (2 rows x 3 cols)
+    # Multi-character strings write once, then pad with fill_char (6 cells total)
     assert grid.chars[0][0] == "A"
     assert grid.chars[0][1] == "B"
-    assert grid.chars[0][2] == "A"
-    assert grid.chars[1][0] == "B"
-    assert grid.chars[1][1] == "A"
-    assert grid.chars[1][2] == "B"
+    assert grid.chars[0][2] == " "  # Padded
+    assert grid.chars[1][0] == " "  # Padded
+    assert grid.chars[1][1] == " "  # Padded
+    assert grid.chars[1][2] == " "  # Padded
 
 
 # Tests for setting attributes only (dict values)
@@ -162,9 +162,9 @@ def test_set_row_both():
     """Test setting both chars and attrs for entire row."""
     grid = MonospaceGrid(10, 5)
     grid[0] = ("Hello", {"class": "ansi-bold"})
-    # Check chars broadcast
+    # Multi-character strings write once, then pad with fill_char
     assert grid.chars[0][0] == "H"
-    assert grid.chars[0][5] == "H"  # Cycles
+    assert grid.chars[0][5] == " "  # Padded
     # Check attrs applied to all
     for col in range(10):
         assert grid.attrs[0][col] == {"class": "ansi-bold"}

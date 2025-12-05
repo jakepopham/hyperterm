@@ -1,6 +1,6 @@
 """Demo script showcasing hyperterm capabilities."""
 
-from hyperterm import MonospaceGrid, TerminalRenderer, HTMLRenderer
+from hyperterm import MonospaceGrid
 
 
 def main():
@@ -44,8 +44,31 @@ def main():
         {"class": "ansi-cyan clickable", "hx-get": "/data", "data-action": "test"},
     )
 
-    terminal_output = TerminalRenderer.render(grid)
-    html_output = HTMLRenderer.render(grid)
+    terminal_output = grid.to_console()
+    html_output = grid.to_html()
+
+    # Create a second grid with border feature enabled
+    bordered_grid = MonospaceGrid(
+        width=30,
+        height=5,
+        fill_char=" ",
+        border=True,
+        border_padding=1,
+        border_attrs={"class": "ansi-cyan ansi-bold"},
+    )
+
+    # Add some content to the bordered grid
+    title = "╔═══ BORDER DEMO ═══╗"
+    bordered_grid[0, 4:4+len(title)] = (title, {"class": "ansi-yellow ansi-bold"})
+
+    text1 = "Automatic box borders!"
+    bordered_grid[2, 4:4+len(text1)] = (text1, {"class": "ansi-green"})
+
+    text2 = "With configurable padding"
+    bordered_grid[3, 3:3+len(text2)] = (text2, {"class": "ansi-white"})
+
+    bordered_terminal = bordered_grid.to_console()
+    bordered_html = bordered_grid.to_html()
 
 
     # Render to terminal
@@ -53,6 +76,12 @@ def main():
     print("Terminal Output (ANSI):")
     print("=" * 50)
     print(terminal_output)
+    print("=" * 50)
+    print()
+    print("=" * 50)
+    print("Terminal Output with Border:")
+    print("=" * 50)
+    print(bordered_terminal)
     print("=" * 50)
     print()
 
@@ -110,6 +139,12 @@ def main():
         • Web: Styled via CSS classes
     </p>
     {html_output}
+    <h2 style="color: white; font-family: monospace; margin-top: 30px;">Border Feature Demo</h2>
+    <p style="color: #aaa; font-family: monospace; font-size: 14px;">
+        The border is added outside the normal indexable grid area.<br>
+        Grid dimensions remain unchanged - border and padding are added at render time.
+    </p>
+    {bordered_html}
     <p style="color: #aaa; font-family: monospace; font-size: 12px; margin-top: 20px;">
         Note: The "Click me!" text has HTMX attributes (hx-get, data-action) that only appear in HTML.
     </p>
