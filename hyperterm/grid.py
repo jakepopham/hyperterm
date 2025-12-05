@@ -118,8 +118,8 @@ class MonospaceGrid:
         ]
 
     def __getitem__(
-        self, key: Union[int, tuple[int, ...]]
-    ) -> tuple[Union[str, list[str]], Union[dict[str, str], list[dict[str, str]]]]:
+        self, key: Union[int, tuple[Union[int, slice], Union[int, slice]]]
+    ) -> tuple[Union[str, list[str]], Union[dict[str, str], list[dict[str, str]], list[list[dict[str, str]]]]]:
         """Get character(s) and attribute(s) from the grid.
 
         Always returns a tuple of (chars, attrs) regardless of slice type.
@@ -136,7 +136,7 @@ class MonospaceGrid:
 
     def __setitem__(
         self,
-        key: Union[int, tuple[int, ...]],
+        key: Union[int, tuple[Union[int, slice], Union[int, slice]]],
         value: Union[str, dict[str, str], tuple[str, dict[str, str]]],
     ) -> None:
         """Set character(s) and/or attribute(s) with type-based dispatch.
@@ -156,16 +156,16 @@ class MonospaceGrid:
             if len(value) != 2:
                 raise ValueError("Tuple assignment requires exactly (text, attrs)")
             text, attrs = value
-            if not isinstance(text, str):
+            if not isinstance(text, str):  # type: ignore[reportUnnecessaryIsInstance]
                 raise TypeError(f"First element must be str, got {type(text)}")
-            if not isinstance(attrs, dict):
+            if not isinstance(attrs, dict):  # type: ignore[reportUnnecessaryIsInstance]
                 raise TypeError(f"Second element must be dict, got {type(attrs)}")
             self._set_chars(key, text)
             self._set_attrs(key, attrs)
         elif isinstance(value, str):
             # String: set only chars
             self._set_chars(key, value)
-        elif isinstance(value, dict):
+        elif isinstance(value, dict):  # type: ignore[reportUnnecessaryIsInstance]
             # Dict: set only attrs
             self._set_attrs(key, value)
         else:
@@ -173,7 +173,7 @@ class MonospaceGrid:
                 f"Value must be str, dict, or tuple of (str, dict), got {type(value)}"
             )
 
-    def _get_chars(self, key: Union[int, tuple[int, ...]]) -> Union[str, list[str]]:
+    def _get_chars(self, key: Union[int, tuple[Union[int, slice], Union[int, slice]]]) -> Union[str, list[str]]:
         """Get character(s) from the grid."""
         if isinstance(key, int):
             # Single row index: grid[0] -> return row as string
@@ -181,7 +181,7 @@ class MonospaceGrid:
                 return "".join(self.chars[key])
             raise IndexError(f"Row index {key} out of range [0, {self.height})")
 
-        if isinstance(key, tuple) and len(key) == 2:
+        if isinstance(key, tuple) and len(key) == 2:  # type: ignore[reportUnnecessaryIsInstance]
             row_idx, col_idx = key
 
             # Both indices are integers: single cell
@@ -213,7 +213,7 @@ class MonospaceGrid:
         raise TypeError(f"Invalid index type: {type(key)}")
 
     def _get_attrs(
-        self, key: Union[int, tuple[int, ...]]
+        self, key: Union[int, tuple[Union[int, slice], Union[int, slice]]]
     ) -> Union[dict[str, str], list[dict[str, str]], list[list[dict[str, str]]]]:
         """Get attribute(s) from the grid."""
         if isinstance(key, int):
@@ -222,7 +222,7 @@ class MonospaceGrid:
                 return [attrs.copy() for attrs in self.attrs[key]]
             raise IndexError(f"Row index {key} out of range [0, {self.height})")
 
-        if isinstance(key, tuple) and len(key) == 2:
+        if isinstance(key, tuple) and len(key) == 2:  # type: ignore[reportUnnecessaryIsInstance]
             row_idx, col_idx = key
 
             # Both indices are integers: single cell
@@ -251,7 +251,7 @@ class MonospaceGrid:
 
         raise TypeError(f"Invalid index type: {type(key)}")
 
-    def _set_chars(self, key: Union[int, tuple[int, ...]], value: str) -> None:
+    def _set_chars(self, key: Union[int, tuple[Union[int, slice], Union[int, slice]]], value: str) -> None:
         """Set character(s) with intelligent broadcasting."""
         if isinstance(key, int):
             # Single row index: grid[0] = 'hello'
@@ -260,7 +260,7 @@ class MonospaceGrid:
             self._set_row_chars(key, value)
             return
 
-        if isinstance(key, tuple) and len(key) == 2:
+        if isinstance(key, tuple) and len(key) == 2:  # type: ignore[reportUnnecessaryIsInstance]
             row_idx, col_idx = key
 
             # Both indices are integers: single cell
@@ -279,7 +279,7 @@ class MonospaceGrid:
         raise TypeError(f"Invalid index type: {type(key)}")
 
     def _set_attrs(
-        self, key: Union[int, tuple[int, ...]], value: dict[str, str]
+        self, key: Union[int, tuple[Union[int, slice], Union[int, slice]]], value: dict[str, str]
     ) -> None:
         """Set attribute(s) with intelligent broadcasting."""
         if isinstance(key, int):
@@ -290,7 +290,7 @@ class MonospaceGrid:
                 self.attrs[key][col] = {**self.attrs[key][col], **value}
             return
 
-        if isinstance(key, tuple) and len(key) == 2:
+        if isinstance(key, tuple) and len(key) == 2:  # type: ignore[reportUnnecessaryIsInstance]
             row_idx, col_idx = key
 
             # Both indices are integers: single cell
@@ -434,7 +434,7 @@ class MonospaceGrid:
             grid.print("Status: OK", color="cyan", bg_color="blue")
         """
         # Build the class string from style arguments
-        classes = []
+        classes: list[str] = []
         if color:
             classes.append(f"ansi-{color}")
         if bg_color:
