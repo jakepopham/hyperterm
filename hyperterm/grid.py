@@ -19,9 +19,16 @@ class MonospaceGrid:
     - Dict value: sets attributes only
     - Tuple (str, dict): sets both characters and attributes
 
+    The grid also supports dynamic sizing and a print() method for console-like output.
+
     Examples:
-        # Create grid
+        # Create fixed-size grid
         grid = MonospaceGrid(width=80, height=24)
+
+        # Create auto-expanding grid
+        grid = MonospaceGrid()
+        grid.print("Hello", color="red", bold=True)
+        grid.print(" World\n", color="green")
 
         # Set characters only
         grid[0] = 'Hello World'              # Set row 0
@@ -47,6 +54,8 @@ class MonospaceGrid:
         fill_char: Character used to fill empty cells
         chars: 2D list of characters
         attrs: 2D list of attribute dictionaries
+        cursor_row: Current row position for print() method
+        cursor_col: Current column position for print() method
         border: Whether to render a border around the grid
         border_padding: Whitespace between border and content (default: 1)
         border_attrs: HTML attributes for border characters
@@ -54,8 +63,8 @@ class MonospaceGrid:
 
     def __init__(
         self,
-        width: int,
-        height: int,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
         fill_char: str = " ",
         border: bool = True,
         border_padding: int = 1,
@@ -64,24 +73,28 @@ class MonospaceGrid:
         """Initialize a new MonospaceGrid.
 
         Args:
-            width: Number of columns
-            height: Number of rows
+            width: Number of columns (optional, defaults to 0 and auto-expands)
+            height: Number of rows (optional, defaults to 0 and auto-expands)
             fill_char: Character to fill the grid with (default: space)
             border: Whether to render a border around the grid (default: False)
             border_padding: Number of whitespace cells between border and content (default: 1)
             border_attrs: HTML attributes to apply to border characters (default: {})
         """
-        self.width: int = width
-        self.height: int = height
+        self.width: int = width if width is not None else 0
+        self.height: int = height if height is not None else 0
         self.fill_char: str = fill_char
         self.border: bool = border
         self.border_padding: int = border_padding
         self.border_attrs: dict[str, str] = border_attrs if border_attrs is not None else {}
 
+        # Cursor tracking for print() method
+        self.cursor_row: int = 0
+        self.cursor_col: int = 0
+
         # Initialize the grid with fill_char and empty attributes
-        self.chars: list[list[str]] = [[fill_char] * width for _ in range(height)]
+        self.chars: list[list[str]] = [[fill_char] * self.width for _ in range(self.height)]
         self.attrs: list[list[dict[str, str]]] = [
-            [{} for _ in range(width)] for _ in range(height)
+            [{} for _ in range(self.width)] for _ in range(self.height)
         ]
 
     def __getitem__(
@@ -343,6 +356,106 @@ class MonospaceGrid:
         else:
             # 1D slice: parallel assignment
             return [(r, c) for r in rows for c in cols]
+
+    # ==================== Cursor and Print Methods ====================
+
+    def _expand_if_needed(self, row: int, col: int) -> None:
+        """Expand the grid if the given position is out of bounds.
+
+        Args:
+            row: Row index to check
+            col: Column index to check
+        """
+        # Expand height if needed
+        if row >= self.height:
+            rows_to_add = row - self.height + 1
+            for _ in range(rows_to_add):
+                self.chars.append([self.fill_char] * self.width)
+                self.attrs.append([{} for _ in range(self.width)])
+            self.height = row + 1
+
+        # Expand width if needed
+        if col >= self.width:
+            cols_to_add = col - self.width + 1
+            for row_idx in range(self.height):
+                self.chars[row_idx].extend([self.fill_char] * cols_to_add)
+                self.attrs[row_idx].extend([{} for _ in range(cols_to_add)])
+            self.width = col + 1
+
+    def print(
+        self,
+        text: str = "",
+        color: Optional[str] = None,
+        bg_color: Optional[str] = None,
+        bold: bool = False,
+        dim: bool = False,
+        underline: bool = False,
+        endl: bool = True,
+        **attrs: str,
+    ) -> None:
+        """Print text to the grid at the current cursor position.
+
+        This method provides a convenient interface for writing styled text to the grid,
+        similar to printing to a console. The grid will automatically expand if needed.
+
+        Args:
+            text: The text to print (supports newlines)
+            color: Foreground color ('red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'white', 'black')
+            bg_color: Background color (same options as color)
+            bold: Apply bold style
+            dim: Apply dim style
+            underline: Apply underline style
+            endl: Whether to print a newline at the end of the text (default: True)
+            **attrs: Additional HTML attributes to apply
+
+        Examples:
+            grid.print("Hello", color="red", bold=True)
+            grid.print("World\\n", color="green")
+            grid.print("Status: OK", color="cyan", bg_color="blue")
+        """
+        # Build the class string from style arguments
+        classes = []
+        if color:
+            classes.append(f"ansi-{color}")
+        if bg_color:
+            classes.append(f"ansi-bg-{bg_color}")
+        if bold:
+            classes.append("ansi-bold")
+        if dim:
+            classes.append("ansi-dim")
+        if underline:
+            classes.append("ansi-underline")
+
+        # Build attributes dict
+        cell_attrs: dict[str, str] = {}
+        if classes:
+            cell_attrs["class"] = " ".join(classes)
+        # Add any additional HTML attributes
+        cell_attrs.update(attrs)
+
+        # Process text character by character
+        for char in text:
+            if char == "\n":
+                # Newline: move to start of next row
+                self.cursor_row += 1
+                self.cursor_col = 0
+            else:
+                # Expand grid if needed
+                self._expand_if_needed(self.cursor_row, self.cursor_col)
+
+                # Write character and attributes
+                self.chars[self.cursor_row][self.cursor_col] = char
+                if cell_attrs:
+                    self.attrs[self.cursor_row][self.cursor_col] = {
+                        **self.attrs[self.cursor_row][self.cursor_col],
+                        **cell_attrs,
+                    }
+
+                # Advance cursor
+                self.cursor_col += 1
+        if endl:
+            self.cursor_row += 1
+            self.cursor_col = 0
 
     # ==================== Terminal Rendering Methods ====================
 
