@@ -7,37 +7,37 @@ from hyperterm import MonospaceGrid
 
 def test_attrs_to_ansi_code_default():
     """Test that empty attributes returns empty string."""
-    code = MonospaceGrid._attrs_to_ansi_code({})
+    code = MonospaceGrid._attrs_to_ansi_code({})  # type: ignore[reportPrivateUsage]
     assert code == ""
 
 
 def test_attrs_to_ansi_code_foreground_color():
     """Test ANSI code generation for foreground colors."""
-    code = MonospaceGrid._attrs_to_ansi_code({"class": "ansi-red"})
+    code = MonospaceGrid._attrs_to_ansi_code({"class": "ansi-red"})  # type: ignore[reportPrivateUsage]
     assert "31" in code  # Red foreground ANSI code
 
 
 def test_attrs_to_ansi_code_background_color():
     """Test ANSI code generation for background colors."""
-    code = MonospaceGrid._attrs_to_ansi_code({"class": "ansi-bg-blue"})
+    code = MonospaceGrid._attrs_to_ansi_code({"class": "ansi-bg-blue"})  # type: ignore[reportPrivateUsage]
     assert "44" in code  # Blue background ANSI code
 
 
 def test_attrs_to_ansi_code_bold():
     """Test ANSI code generation for bold text."""
-    code = MonospaceGrid._attrs_to_ansi_code({"class": "ansi-bold"})
+    code = MonospaceGrid._attrs_to_ansi_code({"class": "ansi-bold"})  # type: ignore[reportPrivateUsage]
     assert "1" in code  # Bold ANSI code
 
 
 def test_attrs_to_ansi_code_underline():
     """Test ANSI code generation for underlined text."""
-    code = MonospaceGrid._attrs_to_ansi_code({"class": "ansi-underline"})
+    code = MonospaceGrid._attrs_to_ansi_code({"class": "ansi-underline"})  # type: ignore[reportPrivateUsage]
     assert "4" in code  # Underline ANSI code
 
 
 def test_attrs_to_ansi_code_combined():
     """Test ANSI code generation for combined styles."""
-    code = MonospaceGrid._attrs_to_ansi_code({"class": "ansi-red ansi-bg-blue ansi-bold ansi-underline"})
+    code = MonospaceGrid._attrs_to_ansi_code({"class": "ansi-red ansi-bg-blue ansi-bold ansi-underline"})  # type: ignore[reportPrivateUsage]
     assert "\033[" in code
     assert "31" in code  # Red foreground
     assert "44" in code  # Blue background
@@ -196,13 +196,13 @@ def test_repr_method():
 
 def test_parse_classes_to_ansi():
     """Test the class parsing utility function."""
-    codes = MonospaceGrid._parse_classes_to_ansi("ansi-red ansi-bold")
+    codes = MonospaceGrid._parse_classes_to_ansi("ansi-red ansi-bold")  # type: ignore[reportPrivateUsage]
     assert "31" in codes  # Red
     assert "1" in codes  # Bold
 
 
 def test_parse_classes_ignores_non_privileged():
     """Test that non-privileged classes are ignored."""
-    codes = MonospaceGrid._parse_classes_to_ansi("ansi-red custom-class ansi-bold")
+    codes = MonospaceGrid._parse_classes_to_ansi("ansi-red custom-class ansi-bold")  # type: ignore[reportPrivateUsage]
     # Should only have red and bold, not custom-class
     assert len(codes) == 2

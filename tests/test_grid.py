@@ -244,22 +244,22 @@ def test_invalid_value_type_raises():
     """Test that invalid value types raise TypeError."""
     grid = MonospaceGrid(5, 5)
     with pytest.raises(TypeError):
-        grid[0, 0] = 123  # Not str, dict, or tuple
+        grid[0, 0] = 123  # type: ignore[assignment] # Not str, dict, or tuple
     with pytest.raises(TypeError):
-        grid[0, 0] = ["list"]  # Not valid type
+        grid[0, 0] = ["list"]  # type: ignore[assignment] # Not valid type
 
 
 def test_invalid_tuple_raises():
     """Test that invalid tuples raise errors."""
     grid = MonospaceGrid(5, 5)
     with pytest.raises(ValueError):
-        grid[0, 0] = ("one",)  # Tuple too short
+        grid[0, 0] = ("one",)  # type: ignore[assignment] # Tuple too short
     with pytest.raises(ValueError):
-        grid[0, 0] = ("one", "two", "three")  # Tuple too long
+        grid[0, 0] = ("one", "two", "three")  # type: ignore[assignment] # Tuple too long
     with pytest.raises(TypeError):
-        grid[0, 0] = (123, {"class": "red"})  # First element not string
+        grid[0, 0] = (123, {"class": "red"})  # type: ignore[assignment] # First element not string
     with pytest.raises(TypeError):
-        grid[0, 0] = ("text", "not-a-dict")  # Second element not dict
+        grid[0, 0] = ("text", "not-a-dict")  # type: ignore[assignment] # Second element not dict
 
 
 def test_empty_string_uses_fill_char():
@@ -303,4 +303,4 @@ def test_complex_grid_operations():
     assert grid.chars[2][5] == "T"
     assert grid.attrs[2][5] == {"class": "ansi-red ansi-bold"}
     chars, _ = grid[4, 2:18]
-    assert chars.startswith("Content here")
+    assert isinstance(chars, str) and chars.startswith("Content here")

@@ -1,7 +1,5 @@
 """Integration tests for hyperterm end-to-end workflows."""
 
-import re
-
 from hyperterm import MonospaceGrid
 
 
