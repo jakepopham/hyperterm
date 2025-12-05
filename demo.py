@@ -70,6 +70,25 @@ def main():
     bordered_terminal = bordered_grid.to_console()
     bordered_html = bordered_grid.to_html()
 
+    # Create a third grid demonstrating the new print() method with auto-expanding
+    print_demo_grid = MonospaceGrid(border=True)
+    print_demo_grid.print("Welcome to ", color="cyan", bold=True)
+    print_demo_grid.print("hyperterm", color="yellow", bold=True, underline=True)
+    print_demo_grid.print("!\n", color="cyan", bold=True)
+    print_demo_grid.print("\n")
+    print_demo_grid.print("Status: ", color="white")
+    print_demo_grid.print("ONLINE", color="green", bg_color="black", bold=True)
+    print_demo_grid.print("\n")
+    print_demo_grid.print("CPU: ", color="white")
+    print_demo_grid.print("OK", color="green", bold=True)
+    print_demo_grid.print("  Memory: ", color="white")
+    print_demo_grid.print("OK", color="green", bold=True)
+    print_demo_grid.print("\n")
+    print_demo_grid.print("Disk: ", color="white")
+    print_demo_grid.print("WARNING", color="yellow", bold=True)
+
+    print_demo_terminal = print_demo_grid.to_console()
+    print_demo_html = print_demo_grid.to_html()
 
     # Render to terminal
     print("=" * 50)
@@ -82,6 +101,15 @@ def main():
     print("Terminal Output with Border:")
     print("=" * 50)
     print(bordered_terminal)
+    print("=" * 50)
+    print()
+    print("=" * 50)
+    print("New print() Method Demo (Auto-expanding):")
+    print("=" * 50)
+    print(print_demo_terminal)
+    print("=" * 50)
+    print(f"Grid auto-expanded to: {print_demo_grid.width}x{print_demo_grid.height}")
+    print(f"Cursor position: ({print_demo_grid.cursor_row}, {print_demo_grid.cursor_col})")
     print("=" * 50)
     print()
 
@@ -145,6 +173,13 @@ def main():
         Grid dimensions remain unchanged - border and padding are added at render time.
     </p>
     {bordered_html}
+    <h2 style="color: white; font-family: monospace; margin-top: 30px;">New print() Method Demo</h2>
+    <p style="color: #aaa; font-family: monospace; font-size: 14px;">
+        Using the new print() method with auto-expanding grid.<br>
+        Grid started at 0x0 and expanded to {print_demo_grid.width}x{print_demo_grid.height} automatically!<br>
+        Convenient styling with color, bold, underline parameters.
+    </p>
+    {print_demo_html}
     <p style="color: #aaa; font-family: monospace; font-size: 12px; margin-top: 20px;">
         Note: The "Click me!" text has HTMX attributes (hx-get, data-action) that only appear in HTML.
     </p>
